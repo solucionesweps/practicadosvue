@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ configuracionPagina.marca }}</title>
+  <script src="https://unpkg.com/vue@3.3.4/dist/vue.global.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <style>
+    body {
+        font-family: Arial, sans-serif;
+    }
+
+    nav {
+        background-color: lightblue;
+        padding: 10px;
+    }
+
+    ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+    }
+
+    li {
+        margin: 0 10px;
+    }
+
+    footer {
+        background-color: slategrey;
+        padding: 10px;
+        color: white;
+        text-align: center;
+    }
+
+    .content {
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    .precio {
+        background: orangered;
+        color: white;
+        font-weight: bold;
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 5px;
+    }
+
+    .producto {
+        margin-top: 20px;
+        margin-right: 25px;
+        text-align: right;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .producto-imagen {
+        flex: 1;
+        margin-right: 40px;
+        text-align: right;
+    }
+
+    .producto-imagen img {
+        width: 200px;
+    }
+
+    .producto-descripcion {
+        flex: 1;
+        text-align: left;
+    }
+
+    .productos-relacionados {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .producto-relacionado {
+        margin: 20px;
+        text-align: center;
+        border: 1px solid #ccc;
+        padding: 10px;
+        width: 200px;
+    }
+
+    .producto-relacionado img {
+        width: 100%;
+        height: auto;
+        margin-bottom: 10px;
+    }
+
+    .producto-relacionado h3 {
+        font-size: 16px;
+        margin-bottom: 5px;
+    }
+
+    .producto-relacionado p {
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+
+    .producto-relacionado .precio {
+        background: orangered;
+        color: white;
+        font-weight: bold;
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 5px;
+    }
+
+    select,
+    input {
+        padding: 5px;
+        margin-bottom: 10px;
+    }
+
+    #circulo {
+        height: 50px;
+        width: 50px;
+        border-radius: 50%;
+        margin: 5px;
+    }
+
+    #circulo2 {
+        height: 30px;
+        width: 30px;
+        border-radius: 50%;
+        margin: 5px;
+    }
+
+    .cantidad-container {
+        display: flex;
+        align-items: center;
+    }
+
+    .cantidad-text {
+        margin: 0 10px;
+    }
+
+    .comprar-btn {
+        margin-top: 20px;
+        background-color: lightblue;
+        border: none;
+        padding: 10px 20px;
+        color: white;
+        font-weight: bold;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+</style>
+</head>
+
+<body>
+  <div id="app">
+    <!-- Barra de navegación -->
+    <nav>
+      <ul>
+        <li><a href="#">{{ configuracionPagina.marca }}</a></li>
+        <li v-for="menu in configuracionPagina.menus" :key="menu.etiqueta">
+          <a :href="menu.url">{{ menu.etiqueta }}</a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Contenido dinámico -->
+    <div class="content">
+      <!-- Sección de producto -->
+      <div class="producto">
+        <div class="producto-imagen">
+          <h2>{{ productoSeleccionado.nombre }}</h2>
+          <img :src="productoSeleccionado.imagen" :alt="productoSeleccionado.nombre">
+        </div>
+        <div class="producto-descripcion">
+          <p v-html="productoSeleccionado.descripcion"></p>
+          <div class="precio">{{ productoSeleccionado.precio }} BOB</div>
+          <div>
+            <label for="colorSelect">Color:</label>
+            <div style="display: flex;">
+              <div v-for="color in productoSeleccionado.colores" :style="'background:' + color" id="circulo"></div>
+            </div>
+          </div>
+          <div>
+            <label for="cantidadInput">Cantidad:</label>
+            <button id="circulo2" @click="aumentarCantidad">+</button>
+            <label id="cantidadInput" type="number" min="1" v-model.number="pedido.cantidad">
+              <span>{{ pedido.cantidad }}</span>
+            </label>
+            <button id="circulo2" @click="disminuirCantidad">-</button>
+          </div>
+          <button class="comprar-btn" @click="comprar" :disabled="!validarPedido()">Comprar</button>
+        </div>
+      </div>
+
+      <!-- Sección de productos relacionados -->
+      <div class="productos-relacionados">
+        <div class="producto-relacionado" v-for="productoRelacionado in productosRelacionados" :key="productoRelacionado.id" @click="mostrarProductoSeleccionado(productoRelacionado)">
+          <h3>{{ productoRelacionado.nombre }}</h3>
+          <img :src="productoRelacionado.imagen" :alt="productoRelacionado.nombre" width="150">
+          <p>{{ productoRelacionado.descripcion }}</p>
+          <div class="precio">{{ productoRelacionado.precio }} BOB</div>
+          <div style="display: flex;">
+            <div v-for="color in productoRelacionado.colores" :style="'background:' + color" id="circulo2"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pie de página -->
+      <footer>
+        © Walter Paco {{ new Date().getFullYear() }} - {{ configuracionPagina.marca }}
+      </footer>
+    </div>
+
+    <script type="module">
+      const app = Vue.createApp({
+        data() {
+          return {
+            selectedOption: 'megadron',
+            configuracionPagina: {
+              marca: "MegaDron",
+              menuColor: "lightblue",
+              footerColor: "slategrey",
+              precioEstilos: "background: orangered; color: white; font-weight: bold",
+              menus: [
+                { etiqueta: "Inicio", url: "#" },
+                { etiqueta: "Tienda", url: "#" }
+              ]
+            },
+            productoSeleccionado: {},
+            productosRelacionados: [],
+            pedido: {
+              id: null,
+              cantidad: 1,
+              color: null
+            }
+          };
+        },
+        methods: {
+          validarPedido() {
+            return this.pedido.cantidad >= 1 && this.pedido.color !== null;
+          },
+          comprar() {
+            const mensaje = `Información del pedido:\n- ID del producto: ${this.productoSeleccionado.id}\n- Cantidad: ${this.pedido.cantidad}\n- Color seleccionado: ${this.pedido.color}`;
+            alert(mensaje);
+          },
+          aumentarCantidad() {
+            this.pedido.cantidad++;
+          },
+          disminuirCantidad() {
+            if (this.pedido.cantidad > 1) {
+              this.pedido.cantidad--;
+            }
+          },
+          obtenerProductos() {
+            axios.get('http://localhost:3000/Productos')
+              .then(response => {
+                this.productoSeleccionado = response.data[0];
+                this.productosRelacionados = response.data.slice(1);
+              })
+              .catch(error => {
+                console.error(error);
+              });
+          },
+          mostrarProductoSeleccionado(producto) {
+            this.productoSeleccionado = producto;
+          }
+        },
+        mounted() {
+          this.obtenerProductos();
+        }
+      });
+
+      app.mount('#app');
+    </script>
+  </div>
+</body>
+
+</html>
